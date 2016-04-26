@@ -8,21 +8,26 @@
             console.log('initialize webapp with opts',opts)
         }
         opts = opts || {}
+        
+        //force the index page to be served up
+        opts.optRenderIndex = true;
+        
         this.id = Math.random().toString()
         this.opts = opts
         this.handlers = opts.handlers || []
         this.init_handlers()
         
-        if (opts.retainstr) {
-            // special option to setup a handler
-            chrome.fileSystem.restoreEntry( opts.retainstr, function(entry) {
-                if (entry) {
-                    this.on_entry(entry)
-                } else {
-                    console.error('error setting up retained entry')
-                }
-            }.bind(this))
-        }
+        //force load the internal IL directory
+        var self = this;
+         chrome.runtime.getPackageDirectoryEntry(
+         function (directoryEntry)
+         {
+           directoryEntry.getDirectory('IL', {create:false}, function(ilEntry){
+             self.on_entry(ilEntry);
+             
+           });
+         });
+        
         if (opts.entry) {
             this.on_entry(opts.entry)
         }

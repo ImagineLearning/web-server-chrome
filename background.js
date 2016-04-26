@@ -151,17 +151,32 @@ function launch(launchData) {
                 launchData: launchData}
     var opts = {id:'index'}
     //var page = 'index.html'
-    var page = 'polymer-ui/index.html'
-    chrome.app.window.create(page,
-                             opts,
-                             function(mainWindow) {
+    var page = 'app.html';
+    
+    
+    //launch our app directly here
+    
+      var screenWidth = screen.availWidth;
+      var screenHeight = screen.availHeight;
+      var width = screenWidth;
+      var height = screenHeight;
+      
+      chrome.app.window.create(page, 
+      {
+        outerBounds: {
+        width: width,
+        height: height,
+        
+        }
+      },
+      function(mainWindow) {
                                  window.mainWindow = mainWindow;
                                  mainWindow.onClosed.addListener( window_closed )
                                  var hiddenwin = chrome.app.window.get('hidden')
                                  if (hiddenwin) { hiddenwin.close() }
                                  
-			     });
-    //console.log('launched')
+			 });
+    
 
     if (window.app) { console.log('already have webapp',app); return }
 
