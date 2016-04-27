@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="browser.css">
+    <script src="browser.js"></script>
+	<script src="parseSettings.js"></script>
+  <body>
+    <div id="controls">
+      <button id="reload" title="Reload">&#10227;</button>
+      <button id="reset">Log Off</button>
+      <form id="location-form">
+        <div id="center-column">
+        </div>
+      </form>
+    </div>
+    <webview id="webview" src="http://localhost:8887/" style="width:100%; height:100%"></webview>
+    <div id="sad-webview">
+      <div id="sad-webview-icon">&#9762;</div>
+      <h2 id="crashed-label">Aw, Snap!</h2>
+      <h2 id="killed-label">He's Dead, Jim!</h2>
+
+      <p>Something went wrong while displaying this webpage.
+      To continue, reload or go to another page.</p>
+    </div>
+  </body>
+</html>

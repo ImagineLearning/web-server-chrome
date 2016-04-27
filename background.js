@@ -151,7 +151,7 @@ function launch(launchData) {
                 launchData: launchData}
     var opts = {id:'index'}
     //var page = 'index.html'
-    var page = 'app.html';
+    var page = 'browser.html';
     
     
     //launch our app directly here

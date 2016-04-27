@@ -3,7 +3,7 @@
     "short_name": "IL Preloaded",
     "description": "Imagine Learning app with preloaded javascript files",
     "author": "Imagine Learning",
-    "version": "0.0.1",
+    "version": "1.80.55682",
     "manifest_version": 2,
     "offline_enabled": true,
     "minimum_chrome_version": "33",
@@ -11,6 +11,9 @@
         "background": {
             "scripts": ["underscore.js","encoding.js","common.js","mime.js","buffer.js","request.js","stream.js","connection.js","webapp.js","handlers.js","httplib.js","background.js"]
         }
+    },
+    "storage": {
+    "managed_schema": "schema.json"
     },
     "permissions": [
         "webview",
@@ -21,6 +24,7 @@
         "power",
         "background",
 	      "system.network",
+	      "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
     ],
     "sockets": {
@@ -36,7 +40,6 @@
        }
     },
     "icons": { 
-        "128": "images/il_128.png",
-        "512": "images/il_512.png"
+        "128": "images/il_128.png"
     }
 }
