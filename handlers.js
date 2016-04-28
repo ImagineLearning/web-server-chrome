@@ -110,6 +110,17 @@
             if (this.fs.isFile) {
                 this.onEntry(this.fs)
             } else {
+              
+                //swap out the release version for the compressed versions
+                if (this.request.path.indexOf("Release") > -1){
+                  //use the compressed folder
+                  var path = this.request.path.replace('Release', 'Compressed');
+                  //add a gz to the extension
+                  path += 'gz';
+                  this.request.path = path;
+                  this.setHeader('Content-Encoding', 'gzip');
+                }
+              
                 this.fs.getByPath(this.request.path, this.onEntry.bind(this))
             }
         },

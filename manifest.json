@@ -3,7 +3,7 @@
     "short_name": "IL Preloaded",
     "description": "Imagine Learning app with preloaded javascript files",
     "author": "Imagine Learning",
-    "version": "1.80.55682",
+    "version": "1.80.57001",
     "manifest_version": 2,
     "offline_enabled": true,
     "minimum_chrome_version": "33",
