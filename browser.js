@@ -156,10 +156,51 @@ function handleLoadStart(event) {
   }
 }
 
+var settings = {};
 function handleLoadStop(event) {
   // We don't remove the loading class immediately, instead we let the animation
   // finish, so that the spinner doesn't jerkily reset back to the 0 position.
   isLoading = false;
+  
+  chrome.storage.sync.get(null, function(items){
+    settings = items;
+    
+    var webview = document.querySelector('webview');
+    //by sending this message the webview can then send messages back to the listener added above
+		webview.contentWindow.postMessage({
+			command: 'handshake',
+			settings: settings
+		}, '*');
+  });
+  
+  window.addEventListener("message", function(event) {
+			console.log('window received message:', event.data);
+			processCommand(event.data);
+		});
+}
+
+function processCommand(data){
+  
+  if (data.command === 'handshakereply'){
+    //ignore because this is just the client telling us it can talk back
+    return;
+  }
+  
+  if (data.command === 'deletePref'){
+    delete settings[data.data.key];
+  }
+  else if (data.command === 'setPref') {
+    settings[data.data.key] = data.data;  
+  }
+  
+  chrome.storage.sync.set(settings, function(){
+    
+    if (!chrome.runtime.lastError) {
+        console.log('settings set');
+    }
+  });
+  
+  
 }
 
 function handleLoadAbort(event) {
