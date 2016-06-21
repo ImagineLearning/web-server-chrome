@@ -1,7 +1,5 @@
 {
-    "name": "Imagine Learning Español Preloaded",
-    "short_name": "IL Español Preloaded",
-    "description": "Imagine Learning Español app with preloaded javascript files",
+    "name": "Imagine Learning Español",
     "author": "Imagine Learning",
     "version": "1.80.6643",
     "manifest_version": 2,
