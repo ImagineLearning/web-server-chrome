@@ -22,6 +22,14 @@ function convertServerSettingsToUrl(serverSettings) {
 				queryString = queryString + '&forceCloudLogUpload';
 			}
 		}
+
+		if (serverSettings && serverSettings.adaptive) {
+			if (queryString === '') {
+				queryString = '?adaptive';
+			} else {
+				queryString = queryString + '&adaptive';
+			}
+		}
 		
 		return protocol + domain + queryString;
 	}

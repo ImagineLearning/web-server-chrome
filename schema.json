@@ -21,6 +21,10 @@
           "id": "forceCloudLogUpload",
           "type": "boolean"
         },
+		"adaptive": {
+          "id": "adaptive",
+          "type": "boolean"
+        },
 		      "releaseChannel": {
             "id": "releaseChannel",
             "type": "string"
