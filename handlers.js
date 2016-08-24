@@ -94,6 +94,54 @@
         head: function() {
             this.get()
         },
+        put: function() {
+            if (! this.app.opts.optUpload) {
+                this.responseLength = 0
+                this.writeHeaders(400)
+                this.finish()
+                return
+            }
+
+            // if upload enabled in options...
+            // check if file exists...
+            this.fs.getByPath(this.request.path, this.onPutEntry.bind(this))
+        },
+        onPutEntry: function(entry) {
+            var parts = this.request.path.split('/')
+            var path = parts.slice(0,parts.length-1).join('/')
+            var filename = parts[parts.length-1]
+
+            if (entry && entry.error == 'path not found') {
+                // good, we can upload it here ...
+                this.fs.getByPath(path, this.onPutFolder.bind(this,filename))
+            } else {
+                var allowReplaceFile = true
+                console.log('file already exists', entry)
+                if (allowReplaceFile) {
+                    this.fs.getByPath(path, this.onPutFolder.bind(this,filename))
+                }
+            }
+        },
+        onPutFolder: function(filename, folder) {
+            var onwritten = function(evt) {
+                console.log('write complete',evt)
+                // TODO write 400 in other cases...
+                this.responseLength = 0
+                this.writeHeaders(200)
+                this.finish()
+            }.bind(this)
+            var body = this.request.body
+            function onfile(entry) {
+                if (entry && entry.isFile) {
+                    function onwriter(writer) {
+                        writer.onwrite = writer.onerror = onwritten
+                        writer.write(new Blob([body]))
+                    }
+                    entry.createWriter(onwriter, onwriter)
+                }
+            }
+            folder.getFile(filename, {create:true}, onfile, onfile)
+        },
         get: function() {
             //this.request.connection.stream.onWriteBufferEmpty = this.onWriteBufferEmpty.bind(this)
 
@@ -242,7 +290,8 @@
                         }
                     }
                     if (this.request.arguments && this.request.arguments.static == '1' ||
-                        this.request.arguments.static == 'true'
+                        this.request.arguments.static == 'true' ||
+						this.app.opts.optStatic
                        ) {
                         this.renderDirectoryListing(results)
                     } else {
@@ -268,7 +317,7 @@
         },
         renderFileContents: function(entry, file) {
             getEntryFile(entry, function(file) {
-                if (file instanceof FileError) {
+                if (file instanceof DOMError) {
                     this.write("File not found", 404)
                     this.finish()
                     return
@@ -396,7 +445,6 @@
             }
             html.push('</ul></html>')
             this.setHeader('content-type','text/html; charset=utf-8')
-            this.setHeader('test-foo-bar','999')
             this.write(html.join('\n'))
         },
         onReadEntry: function(evt) {
@@ -418,10 +466,13 @@
         
         chrome.runtime.getPackageDirectoryEntry( function(pentry) {
             var template_filename = 'directory-listing-template.html'
-            var onfile = function(e) {
-                if (e instanceof FileError) {
+            var onfile = function (e) {
+            	console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				console.log(e);
+                if (e instanceof DOMError) {
                     console.error('template fetch:',e)
-                } else {
+                } else
+                {
                     var onfile = function(file) {
                         var onread = function(evt) {
                             WSC.template_data = evt.target.result

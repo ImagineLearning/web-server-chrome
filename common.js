@@ -1,6 +1,8 @@
 (function() {
 
-  window.WSC = {store_id:"ofhbbkphhbklhfoeikjpcbhemlocgigb"}
+	window.WSC = {store_id:"ofhbbkphhbklhfoeikjpcbhemlocgigb"}
+	WSC.DEBUG = false
+	WSC.VERBOSE = false
 
 function getchromeversion() {
     var version
@@ -12,6 +14,43 @@ function getchromeversion() {
 }
 WSC.getchromeversion = getchromeversion
 
+
+	WSC.maybePromise = function(maybePromiseObj, resolveFn, ctx) {
+		if(maybePromiseObj && maybePromiseObj.then) {
+			return maybePromiseObj.then(function(ret){ return resolveFn.call(ctx, ret); });
+		} else {
+			return resolveFn.call(ctx, maybePromiseObj);
+		}
+	}
+	WSC.strformat = function(s) {
+		var args = Array.prototype.slice.call(arguments,1,arguments.length);
+		return s.replace(/{(\d+)}/g, function(match, number) {
+			return typeof args[number] != 'undefined'
+			    ? args[number]
+			    : match
+			;
+		});
+	}
+	WSC.parse_header = function(line) {
+		debugger
+	}
+	WSC.encode_header = function(name, d) {
+		if (!d) {
+			return name
+		}
+		var out = [name]
+		for (var k in d) {
+			var v = d[k]
+			if (! v) {
+				out.push(k)
+			} else {
+				// quote?
+				outpush(k + '=' + v)
+			}
+		}
+		return out.join('; ')
+	}
+	
 if (! String.prototype.endsWith) {
     String.prototype.endsWith = function(substr) {
         for (var i=0; i<substr.length; i++) {
@@ -90,12 +129,13 @@ if (! String.prototype.startsWith) {
     window.WSC.entryFileCache = new EntryCache
 
 WSC.recursiveGetEntry = function(filesystem, path, callback) {
+    var useCache = false
     // XXX duplication with jstorrent
     var cacheKey = filesystem.filesystem.name +
         filesystem.fullPath +
         '/' + path.join('/')
     var inCache = WSC.entryCache.get(cacheKey)
-    if (inCache) { 
+    if (useCache && inCache) { 
         //console.log('cache hit');
         callback(inCache); return
     }
@@ -107,11 +147,11 @@ WSC.recursiveGetEntry = function(filesystem, path, callback) {
             if (e.name == 'TypeMismatchError') {
                 state.e.getDirectory(state.path, {create:false}, recurse, recurse)
             } else if (e.isFile) {
-                WSC.entryCache.set(cacheKey,e)
+                if (useCache) WSC.entryCache.set(cacheKey,e)
                 callback(e)
             } else if (e.isDirectory) {
                 //console.log(filesystem,path,cacheKey,state)
-                WSC.entryCache.set(cacheKey,e)
+                if (useCache) WSC.entryCache.set(cacheKey,e)
                 callback(e)
             } else {
                 callback({error:'path not found'})
@@ -190,7 +230,7 @@ WSC.str2ab = str2ab
 */
 
 function parseUri(str) {
-    return new URL(str)
+    return new URL(str) // can throw exception, watch out!
 }
 
     

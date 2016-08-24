@@ -30,6 +30,8 @@
 
         this.halfclose = null
         this.onclose = null
+        this.ondata = null
+        this.source = null
         this._close_callbacks = []
 
         this.onWriteBufferEmpty = null
@@ -37,8 +39,20 @@
     }
 
     IOStream.prototype = {
+		set_close_callback: function(fn) {
+			this._close_callbacks = [fn]
+		},
+		set_nodelay: function() {
+			chrome.sockets.tcp.setNoDelay(this.sockId, true, function(){})
+		},
+        removeHandler: function() {
+            delete peerSockMap[this.sockId]
+        },
         addCloseCallback: function(cb) {
             this._close_callbacks.push(cb)
+        },
+        peekstr: function(maxlen) {
+            return WSC.ui82str(new Uint8Array(this.readBuffer.deque[0], 0, maxlen))
         },
         removeCloseCallback: function(cb) {
             debugger
@@ -59,6 +73,7 @@
         readUntil: function(delimiter, callback) {
             this.readUntilDelimiter = delimiter
             this.readCallback = callback
+            this.checkBuffer()
         },
         readBytes: function(numBytes, callback) {
             this.pleaseReadBytes = numBytes
@@ -81,10 +96,14 @@
             //console.log(this.sockId,'tcp.send',WSC.ui82str(new Uint8Array(data)))
             sockets.tcp.send( this.sockId, data, this.onWrite.bind(this, callback) )
         },
+		write: function(data) {
+			this.writeBuffer.add(data)
+			this.tryWrite()
+		},
         onWrite: function(callback, evt) {
             var err = chrome.runtime.lastError
             if (err) {
-                console.log('socket.send lastError',err)
+                //console.log('socket.send lastError',err)
                 //this.tryClose()
                 this.close('writeerr'+err)
                 return
@@ -92,7 +111,7 @@
 
             // look at evt!
             if (evt.bytesWritten <= 0) {
-                console.log('onwrite fail, closing',evt)
+                //console.log('onwrite fail, closing',evt)
                 this.close('writerr<0')
                 return
             }
@@ -113,7 +132,7 @@
                 this.close('read tcp lasterr'+lasterr)
                 return
             }
-            //console.log('onRead',evt)
+            //console.log('onRead',WSC.ui82str(new Uint8Array(evt.data)))
             if (evt.resultCode == 0) {
                 //this.error({message:'remote closed connection'})
                 this.log('remote closed connection (halfduplex)')
@@ -127,12 +146,14 @@
                 this.error({message:'error code',errno:evt.resultCode})
             } else {
                 this.readBuffer.add(evt.data)
+                if (this.onread) { this.onread() }
                 this.checkBuffer()
             }
         },
-
         log: function(msg,msg2,msg3) {
-            console.log(this.sockId,msg,msg2,msg3)
+			if (WSC.VERBOSE) {
+				console.log(this.sockId,msg,msg2,msg3)
+			}
         },
         checkBuffer: function() {
             //console.log('checkBuffer')
@@ -147,7 +168,7 @@
                     this.readCallback = null
                     callback(toret)
                 }
-            } else if (this.pleaseReadBytes) {
+            } else if (this.pleaseReadBytes !== null) {
                 if (this.readBuffer.size() >= this.pleaseReadBytes) {
                     var data = this.readBuffer.consume(this.pleaseReadBytes)
                     var callback = this.readCallback
@@ -158,10 +179,11 @@
             }
         },
         close: function(reason) {
+			if ( this.closed) { return }
             this.connected = false
             this.closed = true
             this.runCloseCallbacks()
-            console.log('tcp sock close',this.sockId)
+            //console.log('tcp sock close',this.sockId)
             delete peerSockMap[this.sockId]
             sockets.tcp.close(this.sockId, this.onClosed.bind(this,reason))
             //this.sockId = null
@@ -172,7 +194,7 @@
             if (lasterr) {
                 console.log('onClosed',reason,lasterr,info)
             } else {
-                console.log('onClosed',reason,info)
+                //console.log('onClosed',reason,info)
             }
         },
         error: function(data) {

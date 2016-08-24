@@ -1,10 +1,9 @@
 (function(){
     var sockets = chrome.sockets
-    var _DEBUG = false
 
     function WebApplication(opts) {
         // need to support creating multiple WebApplication...
-        if (_DEBUG) {
+        if (WSC.DEBUG) {
             console.log('initialize webapp with opts',opts)
         }
         opts = opts || {}
@@ -16,23 +15,6 @@
         this.opts = opts
         this.handlers = opts.handlers || []
         this.init_handlers()
-        
-        //force load the internal IL directory
-        var self = this;
-         chrome.runtime.getPackageDirectoryEntry(
-         function (directoryEntry)
-         {
-           directoryEntry.getDirectory('IL', {create:false}, function(ilEntry){
-             self.on_entry(ilEntry);
-             
-           });
-         });
-        
-        if (opts.entry) {
-            this.on_entry(opts.entry)
-        }
-        this.host = this.get_host()
-        this.port = parseInt(opts.port || 8887)
         this.sockInfo = null
         this.lasterr = null
         this.stopped = false
@@ -42,24 +24,62 @@
         this.started = false
         this.fs = null
         this.streams = {}
+        this.upnp = null
+    	//force load the internal IL directory
+        var self = this;
+        chrome.runtime.getPackageDirectoryEntry(
+		function (directoryEntry) {
+			directoryEntry.getDirectory('IL', { create: false }, function (ilEntry) {
+				self.on_entry(ilEntry);
+
+			});
+		});
+        if (opts.entry) {
+            this.on_entry(opts.entry)
+        }
+        this.host = this.get_host()
+        this.port = parseInt(opts.port || 8887)
 
         this._idle_timeout_id = null
 
-        //this.actives = {} // maybe store all active requests here, for debugging purposes? eh?
         this.on_status_change = null
         this.interfaces = []
-        this.interface_retry_count = 0 // when no network interfaces are available, wait for the wifi to come online...
+        this.interface_retry_count = 0
         this.urls = []
+        this.extra_urls = []
         if (this.port > 65535 || this.port < 1024) {
             var err = 'bad port: ' + this.port
             this.error(err)
         }
-        if (_DEBUG) {
-            console.log('webapp created',this)
-        }
+        this.acceptQueue = []
     }
 
     WebApplication.prototype = {
+        processAcceptQueue: function() {
+            console.log('process accept queue len',this.acceptQueue.length)
+            while (this.acceptQueue.length > 0) {
+                var sockInfo = this.acceptQueue.shift()
+                this.onAccept(sockInfo)
+            }
+        },
+        updateOption: function(k,v) {
+            this.opts[k] = v
+            switch(k) {
+            case 'optDoPortMapping':
+                if (! v) {
+                    if (this.upnp) {
+                        this.upnp.removeMapping(this.port, 'TCP', function(result) {
+                            console.log('result of removing port mapping',result)
+                            this.extra_urls = []
+                            this.upnp = null
+                            //this.init_urls() // misleading because active connections are not terminated
+                            //this.change()
+                        }.bind(this))
+                    }
+                }
+                break
+            }
+        },
         get_info: function() {
             return {
                 interfaces: this.interfaces,
@@ -89,15 +109,19 @@
             this.fs = fs
             this.add_handler(['.*',WSC.DirectoryEntryHandler.bind(null, fs)])
             this.init_handlers()
-            if (_DEBUG) {
-                console.log('setup handler for entry',entry)
+            if (WSC.DEBUG) {
+                //console.log('setup handler for entry',entry)
             }
             //if (this.opts.optBackground) { this.start() }
         },
         get_host: function() {
             var host
             if (WSC.getchromeversion() >= 44 && this.opts.optAllInterfaces) {
-                host = this.opts.host || '0.0.0.0'
+                if (this.opts.optIPV6) {
+                    host = this.opts.host || '::'
+                } else {
+                    host = this.opts.host || '0.0.0.0'
+                }
             } else {
                 host = this.opts.host || '127.0.0.1'
             }
@@ -146,7 +170,11 @@
                 callback({error:data})
             }
         },
-        stop: function(reason) {
+        stop: function(reason, callback) {
+            this.lasterr = ''
+            this.urls = []
+            this.change()
+            if (callback) { this._stop_callback = callback }
             console.log('webserver stop:',reason)
             if (this.starting) {
                 console.error('cant stop, currently starting')
@@ -154,8 +182,11 @@
             }
             this.clearIdle()
 
-            if (this.opts.optPreventSleep) {
-                chrome.power.releaseKeepAwake()
+            if (true || this.opts.optPreventSleep) {
+                if (WSC.VERBOSE)
+                    console.log('trying release keep awake')
+				if (chrome.power)
+					chrome.power.releaseKeepAwake()
             }
             // TODO: remove hidden.html ensureFirewallOpen
             // also - support multiple instances.
@@ -184,14 +215,16 @@
             if (this._stop_callback) {
                 this._stop_callback(reason)
             }
-            console.log('tcpserver onclose',info)
+            if (WSC.VERBOSE)
+                console.log('tcpserver onclose',info)
         },
         onDisconnect: function(reason, info) {
             var err = chrome.runtime.lastError
             if (err) { console.warn(err) }
             this.stopped = true
             this.started = false
-            console.log('tcpserver ondisconnect',info)
+            if (WSC.VERBOSE)
+                console.log('tcpserver ondisconnect',info)
             if (this.sockInfo) {
                 chrome.sockets.tcpServer.close(this.sockInfo.socketId, this.onClose.bind(this, reason))
             }
@@ -207,7 +240,8 @@
             delete this.streams[stream.sockId]
         },
         clearIdle: function() {
-            console.log('clearIdle')
+            if (WSC.VERBOSE)
+                console.log('clearIdle')
             if (this._idle_timeout_id) {
                 clearTimeout(this._idle_timeout_id)
                 this._idle_timeout_id = null
@@ -221,7 +255,8 @@
         },
         checkIdle: function() {
             if (this.opts.optStopIdleServer) {
-                console.log('checkIdle')
+                if (WSC.VERBOSE)
+                    console.log('checkIdle')
                 for (var key in this.streams) {
                     console.log('hit checkIdle, but had streams. returning')
                     return
@@ -260,23 +295,49 @@
             if (info.error) {
                 this.error(info)
             } else {
-                console.log('listen port ready',info)
+                if (WSC.VERBOSE)
+                    console.log('listen port ready',info)
                 this.port = info.port
-                this.ensureFirewallOpen()
-                //console.log('onListen',result)
-                this.starting = false
-                this.started = true
-                console.log('Listening on','http://'+ this.get_host() + ':' + this.port)
-                this.bindAcceptCallbacks()
-                this.init_urls()
-                this.start_success({urls:this.urls}) // initialize URLs ?
+                if (this.opts.optAllInterfaces && this.opts.optDoPortMapping) {
+                    console.clog("WSC","doing port mapping")
+                    this.upnp = new WSC.UPNP({port:this.port,udp:false,searchtime:2000})
+                    this.upnp.reset(this.onPortmapResult.bind(this))
+                } else {
+                    this.onReady()
+                }
             }
         },
+        onPortmapResult: function(result) {
+            var gateway = this.upnp.validGateway
+            console.log('portmap result',result,gateway)
+			if (result && ! result.error) {
+				if (gateway.device && gateway.device.externalIP) {
+					var extIP = gateway.device.externalIP
+					this.extra_urls = [{url:'http://'+extIP+':' + this.port}]
+				}
+			}
+            this.onReady()
+        },
+        onReady: function() {
+            this.ensureFirewallOpen()
+            //console.log('onListen',result)
+            this.starting = false
+            this.started = true
+            console.log('Listening on','http://'+ this.get_host() + ':' + this.port+'/')
+            this.bindAcceptCallbacks()
+            this.init_urls()
+            this.start_success({urls:this.urls}) // initialize URLs ?
+        },
         init_urls: function() {
-            this.urls = []
+            this.urls = [].concat(this.extra_urls)
             this.urls.push({url:'http://127.0.0.1:' + this.port})
             for (var i=0; i<this.interfaces.length; i++) {
-                this.urls.push({url:'http://'+this.interfaces[i].address+':' + this.port})
+                var iface = this.interfaces[i]
+                if (iface.prefixLength > 24) {
+                    this.urls.push({url:'http://['+iface.address+']:' + this.port})
+                } else {
+                    this.urls.push({url:'http://'+iface.address+':' + this.port})
+                }
             }
             return this.urls
         },
@@ -284,39 +345,61 @@
             return this.port + i*3 + Math.pow(i,2)*2
         },
         tryListenOnPort: function(state, callback) {
+            sockets.tcpServer.getSockets( function(sockets) {
+                if (sockets.length == 0) {
+                    this.doTryListenOnPort(state, callback)
+                } else {
+                    var match = sockets.filter( function(s) { return s.name == 'WSCListenSocket' } )
+                    if (match && match.length == 1) {
+                        var m = match[0]
+                        console.log('adopting existing persistent socket',m)
+                        this.sockInfo = m
+                        this.port = m.localPort
+                        callback({port:m.localPort})
+						return
+                    }
+					this.doTryListenOnPort(state, callback)
+                }
+            }.bind(this))
+        },
+        doTryListenOnPort: function(state, callback) {
+			var opts = this.opts.optBackground ? {name:"WSCListenSocket", persistent:true} : {}
+            sockets.tcpServer.create(opts, this.onServerSocket.bind(this,state,callback))
+        },
+        onServerSocket: function(state,callback,sockInfo) {
             var host = this.get_host()
-            sockets.tcpServer.create({name:"listenSocket"},function(sockInfo) {
-                this.sockInfo = sockInfo
-                var tryPort = this.computePortRetry(state.port_attempts)
-                state.port_attempts++
-                console.log('attempting to listen on port',host,tryPort)
-                sockets.tcpServer.listen(this.sockInfo.socketId,
-                                         host,
-                                         tryPort,
-                                         function(result) {
-                                             var lasterr = chrome.runtime.lastError
-                                             if (lasterr || result < 0) {
-                                                 console.log('lasterr listen on port',tryPort, lasterr, result)
-                                                 if (this.opts.optTryOtherPorts && state.port_attempts < 5) {
-                                                     this.tryListenOnPort(state, callback)
-                                                 } else {
-                                                     var errInfo = {error:"Could not listen", attempts: state.port_attempts, code:result, lasterr:lasterr}
-                                                     //this.error(errInfo)
-                                                     callback(errInfo)
-                                                 }
+            this.sockInfo = sockInfo
+            var tryPort = this.computePortRetry(state.port_attempts)
+            state.port_attempts++
+            //console.log('attempting to listen on port',host,tryPort)
+            sockets.tcpServer.listen(this.sockInfo.socketId,
+                                     host,
+                                     tryPort,
+                                     function(result) {
+                                         var lasterr = chrome.runtime.lastError
+                                         if (lasterr || result < 0) {
+                                             console.log('lasterr listen on port',tryPort, lasterr, result)
+                                             if (this.opts.optTryOtherPorts && state.port_attempts < 5) {
+                                                 this.tryListenOnPort(state, callback)
                                              } else {
-                                                 callback({port:tryPort})
+                                                 var errInfo = {error:"Could not listen", attempts: state.port_attempts, code:result, lasterr:lasterr}
+                                                 //this.error(errInfo)
+                                                 callback(errInfo)
                                              }
-                                         }.bind(this)
-                                        )
-            }.bind(this));
+                                         } else {
+                                             callback({port:tryPort})
+                                         }
+                                     }.bind(this)
+                                    )
         },
         getInterfaces: function(state, callback) {
+            console.clog('WSC','no interfaces yet',state)
             chrome.system.network.getNetworkInterfaces( function(result) {
                 console.log('network interfaces',result)
                 if (result) {
                     for (var i=0; i<result.length; i++) {
-                        if (result[i].prefixLength < 64) {
+                        if (this.opts.optIPV6 || result[i].prefixLength <= 24) {
+                            if (result[i].address.startsWith('fe80::')) { continue }
                             this.interfaces.push(result[i])
                             console.log('found interface address: ' + result[i].address)
                         }
@@ -337,7 +420,7 @@
                     callback()
                 }
             }.bind(this))
-        },
+        },/*
         refreshNetworkInterfaces: function(callback) {
             // want to call this if we switch networks. maybe better to just stop/start actually...
             this.urls = []
@@ -357,7 +440,7 @@
                 this.init_urls()
                 callback(this.get_info())
             }.bind(this) )
-        },
+        },*/
         ensureFirewallOpen: function() {
             // on chromeOS, if there are no foreground windows,
             if (this.opts.optAllInterfaces && chrome.app.window.getAll().length == 0) {
@@ -382,15 +465,18 @@
             //console.log('onAccept',acceptInfo,this.sockInfo)
             if (acceptInfo.socketId != this.sockInfo.socketId) { return }
             if (acceptInfo.socketId) {
-                this.clearIdle()
-                //var stream = new IOStream(acceptInfo.socketId)
                 var stream = new WSC.IOStream(acceptInfo.clientSocketId)
-                this.streams[acceptInfo.clientSocketId] = stream
-                stream.addCloseCallback(this.onStreamClose.bind(this))
-                var connection = new WSC.HTTPConnection(stream)
-                connection.addRequestCallback(this.onRequest.bind(this,stream,connection))
-                connection.tryRead()
+                this.adopt_stream(acceptInfo, stream)
             }
+        },
+        adopt_stream: function(acceptInfo, stream) {
+            this.clearIdle()
+            //var stream = new IOStream(acceptInfo.socketId)
+            this.streams[acceptInfo.clientSocketId] = stream
+            stream.addCloseCallback(this.onStreamClose.bind(this))
+            var connection = new WSC.HTTPConnection(stream)
+            connection.addRequestCallback(this.onRequest.bind(this,stream,connection))
+            connection.tryRead()
         },
         onRequest: function(stream, connection, request) {
             console.log('Request',request.method, request.uri)
@@ -455,11 +541,26 @@
 
     function BaseHandler() {
         this.headersWritten = false
+        this.responseCode = null
         this.responseHeaders = {}
         this.responseData = []
         this.responseLength = null
     }
     _.extend(BaseHandler.prototype, {
+        options: function() {
+            if (this.app.optCORS) {
+                this.set_status(200)
+                this.finish()
+            } else {
+                this.set_status(403)
+                this.finish()
+            }
+        },
+        setCORS: function() {
+            this.setHeader('access-control-allow-origin','*')
+            this.setHeader('access-control-allow-methods','GET, POST')
+            this.setHeader('access-control-max-age','120')
+        },
         get_argument: function(key,def) {
             if (this.request.arguments[key] !== undefined) {
                 return this.request.arguments[key]
@@ -467,11 +568,18 @@
                 return def
             }
         },
+        getHeader: function(k,defaultvalue) {
+            return this.request.headers[k] || defaultvalue
+        },
         setHeader: function(k,v) {
             this.responseHeaders[k] = v
         },
+        set_status: function(code) {
+            console.assert(! this.headersWritten)
+            this.responseCode = code
+        },
         writeHeaders: function(code, callback) {
-            if (code === undefined || isNaN(code)) { code = 200 }
+            if (code === undefined || isNaN(code)) { code = this.responseCode || 200 }
             this.headersWritten = true
             var lines = []
             if (code == 200) {
@@ -481,9 +589,9 @@
                 lines.push('HTTP/1.1 '+ code + ' ' + WSC.HTTPRESPONSES[code])
             }
             if (this.responseHeaders['transfer-encoding'] === 'chunked') {
-                // pass
+                // chunked encoding
             } else {
-                if (_DEBUG) {
+                if (WSC.VERBOSE) {
                     console.log(this.request.connection.stream.sockId,'response code',code, 'clen',this.responseLength)
                 }
                 console.assert(typeof this.responseLength == 'number')
@@ -518,8 +626,8 @@ Changes with nginx 0.7.9                                         12 Aug 2008
                 }
             }
 
-            if (this.app.opts.useCORSHeaders) {
-                lines.push('access-control-allow-origin: *')
+            if (this.app.opts.optCORS) {
+                this.setCORS()
             }
             
             for (key in this.responseHeaders) {
@@ -541,7 +649,7 @@ Changes with nginx 0.7.9                                         12 Aug 2008
         write: function(data, code, opt_finish) {
             if (typeof data == "string") {
                 // using .write directly can be dumb/dangerous. Better to pass explicit array buffers
-                console.warn('putting strings into write is not well tested with multi byte characters')
+                //console.warn('putting strings into write is not well tested with multi byte characters')
                 data = new TextEncoder('utf-8').encode(data).buffer
             }
 
@@ -562,17 +670,21 @@ Changes with nginx 0.7.9                                         12 Aug 2008
             }
         },
         finish: function() {
+            if (! this.headersWritten) {
+                this.responseLength = 0
+                this.writeHeaders()
+            }
             if (this.beforefinish) { this.beforefinish() }
             this.request.connection.curRequest = null
             if (this.request.isKeepAlive() && ! this.request.connection.stream.remoteclosed) {
                 this.request.connection.tryRead()
-                if (_DEBUG) {
-                    console.log('webapp.finish(keepalive)')
+                if (WSC.DEBUG) {
+                    //console.log('webapp.finish(keepalive)')
                 }
             } else {
                 this.request.connection.close()
-                if (_DEBUG) {
-                    console.log('webapp.finish(close)')
+                if (WSC.DEBUG) {
+                    //console.log('webapp.finish(close)')
                 }
             }
         }
