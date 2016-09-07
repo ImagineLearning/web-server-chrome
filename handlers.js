@@ -158,7 +158,6 @@
             if (this.fs.isFile) {
                 this.onEntry(this.fs)
             } else {
-              
                 //swap out the release version for the compressed versions
                 if (this.request.path.indexOf("Release") > -1){
                   //use the compressed folder
@@ -166,6 +165,12 @@
                   //add a gz to the extension
                   path += 'gz';
                   this.request.path = path;
+                  this.setHeader('Content-Encoding', 'gzip');
+                }
+
+                if (this.request.path.indexOf("dash.mediaplayer.min.js") > -1){
+                  //add a gz to the extension
+                  this.request.path += 'gz';
                   this.setHeader('Content-Encoding', 'gzip');
                 }
               
