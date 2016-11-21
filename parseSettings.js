@@ -23,7 +23,7 @@ function convertServerSettingsToUrl(serverSettings) {
 			}
 		}
 
-		if (serverSettings && serverSettings.adaptive) {
+		if (serverSettings && serverSettings.adaptive && serverSettings.adaptive === true) {
 			if (queryString === '') {
 				queryString = '?adaptive';
 			} else {
