@@ -20,12 +20,13 @@
         "storage",
         "power",
         "system.network",
-	      "audioCapture",
+        "management",
+        "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
     ],
-	"optional_permissions": [
+    "optional_permissions": [
         "background"
-	],
+    ],
     "sockets": {
        "udp": {
          "send": [""],
@@ -41,5 +42,13 @@
     },
     "icons": { 
         "128": "images/il_128.png"
-    }
+    },
+    "url_handlers":{
+        "openApp": {
+            "matches":[            
+            "https://client.imaginelearning.com/player"
+            ],
+            "title" : "Opening Imagine Learning"
+        }
+    },
 }
