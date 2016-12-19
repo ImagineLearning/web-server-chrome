@@ -45,10 +45,8 @@
     },
     "url_handlers":{
         "openApp": {
-            "matches":[            
-            "https://client.imaginelearning.com/player"
-            ],
-            "title" : "Opening Imagine Learning"
+            "title" : "Opening Imagine Learning",
+            "matches":[ "https://client.imaginelearning.com/player" ]
         }
-    },
+    }
 }
