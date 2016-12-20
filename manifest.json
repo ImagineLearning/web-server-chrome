@@ -46,7 +46,7 @@
     "url_handlers":{
         "openApp": {
             "title" : "Opening Imagine Learning",
-            "matches":[ "https://client.imaginelearning.com/player" ]
+            "matches":["https://il-client-dev.azurewebsites.net"]
         }
     }
 }
