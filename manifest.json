@@ -20,7 +20,6 @@
         "storage",
         "power",
         "system.network",
-        "management",
         "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
     ],
@@ -42,11 +41,5 @@
     },
     "icons": { 
         "128": "images/il_128.png"
-    },
-    "url_handlers":{
-        "openApp": {
-            "title" : "Opening Imagine Learning",
-            "matches":["https://il-client-dev.azurewebsites.net"]
-        }
     }
 }
