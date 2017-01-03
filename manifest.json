@@ -42,4 +42,14 @@
     "icons": { 
         "128": "images/il_128.png"
     }
+    "url_handlers": {
+        "openApp": {
+            "matches": [
+                "*://my.imagelearning.com/player/*",
+                "*://my.imagelearning.com/player/",
+                "*://client.imaginelearning.com/*"
+            ],
+            "title": "Open Imagine Learning"
+        }
+    }
 }
