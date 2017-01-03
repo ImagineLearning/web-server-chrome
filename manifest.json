@@ -41,7 +41,7 @@
     },
     "icons": { 
         "128": "images/il_128.png"
-    }
+    },
     "url_handlers": {
         "openApp": {
             "matches": [
