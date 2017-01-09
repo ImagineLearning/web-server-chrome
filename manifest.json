@@ -45,8 +45,6 @@
     "url_handlers": {
         "openApp": {
             "matches": [
-                "*://my.imagelearning.com/player/*",
-                "*://my.imagelearning.com/player/",
                 "*://client.imaginelearning.com/*"
             ],
             "title": "Open Imagine Learning"
