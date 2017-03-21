@@ -1,37 +1,33 @@
 var baseUrl = "localhost:8887/";
 
 
-function convertServerSettingsToUrl(serverSettings) {
-	if (serverSettings !== undefined && serverSettings !== null) {
-	
-		var protocol = 'http://';
-				
-		var domain = baseUrl;
-				
-		var queryString = '';
-		if (serverSettings && serverSettings.cloudSiteCode && serverSettings.cloudSiteCode.length > 0) {
-			queryString =  '?sitecode=' + serverSettings.cloudSiteCode;
+function convertServerSettingsToUrl(serverSettings, launchUrl) {
+	var url = 'http://' + baseUrl;
+
+	if (launchUrl) {
+		url += launchUrl.replace(/^\//, '');
+	}
+
+	if (serverSettings) {
+		var queryString = [];
+		if (serverSettings && serverSettings.cloudSiteCode && serverSettings.cloudSiteCode.length > 0 && url.indexOf('sitecode') < 0) {
+			queryString.push('sitecode=' + serverSettings.cloudSiteCode);
 		} else if (serverSettings && serverSettings.engineAddress && serverSettings.engineAddress.length > 0) {
-			queryString = '?engineaddress=' + serverSettings.engineAddress;
+			queryString.push('engineaddress=' + serverSettings.engineAddress);
 		}
 		
 		if (serverSettings && serverSettings.forceCloudLogUpload && serverSettings.forceCloudLogUpload === true) {
-			if (queryString === '') {
-				queryString = '?forceCloudLogUpload';
-			} else {
-				queryString = queryString + '&forceCloudLogUpload';
-			}
+			queryString.push('forceCloudLogUpload');
 		}
 
 		if (serverSettings && serverSettings.adaptive && serverSettings.adaptive === true) {
-			if (queryString === '') {
-				queryString = '?adaptive';
-			} else {
-				queryString = queryString + '&adaptive';
-			}
+			queryString.push('adaptive');
 		}
-		
-		return protocol + domain + queryString;
+
+		if (queryString.length) {
+			url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
+		}
 	}
-	return '';
+
+	return url;
 }

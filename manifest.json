@@ -43,7 +43,13 @@
         "128": "images/il_128.png"
     },
     "url_handlers": {
-        "openApp": {
+        "localhost/player": {
+            "matches": [
+                "*://localhost/player/*"
+            ],
+            "title": "Open Imagine Learning"
+        },
+        "client.imaginelearning.com": {
             "matches": [
                 "*://client.imaginelearning.com/*"
             ],
