@@ -43,39 +43,21 @@
         "128": "images/il_128.png"
     },
     "url_handlers": {
-        "localhost/player": {
+        "il-client-dev.azurewebsites.net" : {
             "matches": [
-                "*://localhost/player*"
+                "*://il-client-dev.azurewebsites.net/*"
+            ],
+            "title": "Open Imagine Learning"
+        },
+        "il-client-rc.azurewebsites.net" : {
+            "matches": [
+                "*://il-client-rc.azurewebsites.net/*"
             ],
             "title": "Open Imagine Learning"
         },
         "client.imaginelearning.com": {
             "matches": [
                 "*://client.imaginelearning.com/*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "test.my.imaginelearning.com/player": {
-            "matches": [
-                "*://test.my.imaginelearning.com/player*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "rc.my.imaginelearning.com/player": {
-            "matches": [
-                "*://rc.my.imaginelearning.com/player*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "my.imaginelearning.com/player": {
-            "matches": [
-                "*://my.imaginelearning.com/player*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "demo.my.imaginelearning.com/player": {
-            "matches": [
-                "*://demo.my.imaginelearning.com/player*"
             ],
             "title": "Open Imagine Learning"
         }
