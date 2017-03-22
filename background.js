@@ -217,7 +217,7 @@ function launch(launchData) {
 		chrome.storage.local.set({ relativeLaunchUrl: relativeUrl }, launchApp);
 	} else {
 		// Otherwise clear it out
-		chome.storage.local.remove('relativeLaunchUrl', launchApp);
+		chrome.storage.local.remove('relativeLaunchUrl', launchApp);
 	}
 
 	function launchApp() {
