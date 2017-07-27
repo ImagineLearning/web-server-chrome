@@ -24,6 +24,10 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 			queryString.push('adaptive');
 		}
 
+		if (serverSettings && serverSettings.env && serverSettings.env.length > 0) {
+			queryString.push('env=' + serverSettings.env);
+		}
+
 		if (queryString.length) {
 			url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
 		}
