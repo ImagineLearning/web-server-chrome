@@ -33,5 +33,10 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 		}
 	}
 
+	//if no environment set then default to production
+	if(url.indexOf("env") < 0) {
+		url += (url.indexOf('?') < 0 ? '?' : '&') + 'env=production';
+	}
+
 	return url;
 }
