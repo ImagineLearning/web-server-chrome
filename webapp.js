@@ -25,15 +25,15 @@
         this.fs = null
         this.streams = {}
         this.upnp = null
-    	//force load the internal IL directory
+        //force load the internal IL directory
         var self = this;
         chrome.runtime.getPackageDirectoryEntry(
-		function (directoryEntry) {
-			directoryEntry.getDirectory('IL', { create: false }, function (ilEntry) {
-				self.on_entry(ilEntry);
+        function (directoryEntry) {
+            directoryEntry.getDirectory('IL', { create: false }, function (ilEntry) {
+                self.on_entry(ilEntry);
 
-			});
-		});
+            });
+        });
         if (opts.entry) {
             this.on_entry(opts.entry)
         }
@@ -91,19 +91,6 @@
                 lasterr: this.lasterr
             }
         },
-        updatedSleepSetting: function() {
-            if (! this.started) {
-                chrome.power.releaseKeepAwake()
-                return
-            }
-            if (this.opts.optPreventSleep) {
-                console.log('requesting keep awake system')
-                chrome.power.requestKeepAwake(chrome.power.Level.SYSTEM)
-            } else {
-                console.log('releasing keep awake system')
-                chrome.power.releaseKeepAwake()
-            }
-        },
         on_entry: function(entry) {
             var fs = new WSC.FileSystem(entry)
             this.fs = fs
@@ -142,10 +129,6 @@
             if (this.on_status_change) { this.on_status_change() }
         },
         start_success: function(data) {
-            if (this.opts.optPreventSleep) {
-                console.log('requesting keep awake system')
-                chrome.power.requestKeepAwake(chrome.power.Level.SYSTEM)
-            }
             var callback = this.start_callback
             this.start_callback = null
             this.registerIdle()
@@ -155,9 +138,6 @@
             this.change()
         },
         error: function(data) {
-            if (this.opts.optPreventSleep) {
-                chrome.power.releaseKeepAwake()
-            }
             this.interface_retry_count=0
             var callback = this.start_callback
             this.starting = false
@@ -181,13 +161,6 @@
                 return
             }
             this.clearIdle()
-
-            if (true || this.opts.optPreventSleep) {
-                if (WSC.VERBOSE)
-                    console.log('trying release keep awake')
-				if (chrome.power)
-					chrome.power.releaseKeepAwake()
-            }
             // TODO: remove hidden.html ensureFirewallOpen
             // also - support multiple instances.
 
@@ -310,12 +283,12 @@
         onPortmapResult: function(result) {
             var gateway = this.upnp.validGateway
             console.log('portmap result',result,gateway)
-			if (result && ! result.error) {
-				if (gateway.device && gateway.device.externalIP) {
-					var extIP = gateway.device.externalIP
-					this.extra_urls = [{url:'http://'+extIP+':' + this.port}]
-				}
-			}
+            if (result && ! result.error) {
+                if (gateway.device && gateway.device.externalIP) {
+                    var extIP = gateway.device.externalIP
+                    this.extra_urls = [{url:'http://'+extIP+':' + this.port}]
+                }
+            }
             this.onReady()
         },
         onReady: function() {
@@ -356,14 +329,14 @@
                         this.sockInfo = m
                         this.port = m.localPort
                         callback({port:m.localPort})
-						return
+                        return
                     }
-					this.doTryListenOnPort(state, callback)
+                    this.doTryListenOnPort(state, callback)
                 }
             }.bind(this))
         },
         doTryListenOnPort: function(state, callback) {
-			var opts = this.opts.optBackground ? {name:"WSCListenSocket", persistent:true} : {}
+            var opts = this.opts.optBackground ? {name:"WSCListenSocket", persistent:true} : {}
             sockets.tcpServer.create(opts, this.onServerSocket.bind(this,state,callback))
         },
         onServerSocket: function(state,callback,sockInfo) {

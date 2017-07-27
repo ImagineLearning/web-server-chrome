@@ -4,9 +4,10 @@
     "author": "Imagine Learning",
     "version": "1.80.6643",
     "manifest_version": 2,
-    "offline_enabled": true,
+    "offline_enabled": false,
     "minimum_chrome_version": "56",
     "kiosk_enabled": true,
+    "description": "Imagine Language & Literacy® teaches language and literacy to students around the world through engaging, interactive instruction.",
     "app": {
         "background": {
             "scripts": ["underscore.js","encoding.js","common.js","log-full.js","mime.js","buffer.js","request.js","stream.js","chromesocketxhr.js","connection.js","webapp.js","websocket.js","handlers.js","httplib.js","upnp.js","background.js"]
@@ -19,7 +20,6 @@
         "webview",
         "alarms",
         "storage",
-        "power",
         "system.network",
         "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
