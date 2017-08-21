@@ -1,5 +1,4 @@
-var baseUrl = "localhost:8887/";
-
+var baseUrl = 'localhost:8887/';
 
 function convertServerSettingsToUrl(serverSettings, launchUrl) {
 	var url = 'http://' + baseUrl;
@@ -8,35 +7,37 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 		url += launchUrl.replace(/^\//, '');
 	}
 
+	var queryString = ['chromeappid=' + chrome.runtime.id];
+
 	if (serverSettings) {
-		var queryString = [];
-		if (serverSettings && serverSettings.cloudSiteCode && serverSettings.cloudSiteCode.length > 0 && url.indexOf('sitecode') < 0) {
-			queryString.push('sitecode=' + serverSettings.cloudSiteCode);
-		} else if (serverSettings && serverSettings.engineAddress && serverSettings.engineAddress.length > 0) {
+		if ((serverSettings.sitecode || serverSettings.cloudSiteCode) && url.indexOf('sitecode') < 0) {
+			queryString.push('sitecode=' + serverSettings.sitecode || serverSettings.cloudSiteCode);
+		} else if (serverSettings.engineAddress) {
 			queryString.push('engineaddress=' + serverSettings.engineAddress);
 		}
-		
-		if (serverSettings && serverSettings.forceCloudLogUpload && serverSettings.forceCloudLogUpload === true) {
+
+		if (serverSettings.forceCloudLogUpload && serverSettings.forceCloudLogUpload === true) {
 			queryString.push('forceCloudLogUpload');
 		}
 
-		if (serverSettings && serverSettings.adaptive && serverSettings.adaptive === true) {
+		if (serverSettings.adaptive && serverSettings.adaptive === true) {
 			queryString.push('adaptive');
 		}
 
-		if (serverSettings && serverSettings.env && serverSettings.env.length > 0) {
+		if (serverSettings.env) {
 			queryString.push('env=' + serverSettings.env);
-		}
-
-		if (queryString.length) {
-			url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
 		}
 	}
 
 	//if no environment set then default to production
-	if(url.indexOf("env") < 0) {
-		url += (url.indexOf('?') < 0 ? '?' : '&') + 'env=production';
+	var envIndex = queryString.findIndex(function(item) {
+		return /^env=/.test(item);
+	});
+	if (envIndex < 0) {
+		queryString.push('env=production');
 	}
+
+	url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
 
 	return url;
 }

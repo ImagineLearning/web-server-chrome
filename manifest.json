@@ -16,6 +16,7 @@
     },
     "permissions": [
         "webview",
+        "browser",
         "alarms",
         "storage",
         "power",
@@ -61,5 +62,8 @@
             ],
             "title": "Open Imagine Learning"
         }
+    },
+    "externally_connectable": {
+        "matches": ["*://localhost:*/*", "*://127.0.0.1:*/*", "*://*.imaginelearning.com/*"]
     }
 }

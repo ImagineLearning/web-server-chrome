@@ -18,6 +18,7 @@
     },
     "permissions": [
         "webview",
+        "browser",
         "alarms",
         "storage",
         "system.network",
@@ -42,5 +43,8 @@
     },
     "icons": { 
         "128": "images/ilandl_128.png"
+    },
+    "externally_connectable": {
+        "matches": ["*://localhost:*/*", "*://127.0.0.1:*/*", "*://*.imaginelearning.com/*"]
     }
 }
