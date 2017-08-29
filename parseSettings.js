@@ -11,7 +11,7 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 
 	if (serverSettings) {
 		if ((serverSettings.sitecode || serverSettings.cloudSiteCode) && url.indexOf('sitecode') < 0) {
-			queryString.push('sitecode=' + serverSettings.sitecode || serverSettings.cloudSiteCode);
+			queryString.push('sitecode=' + (serverSettings.sitecode || serverSettings.cloudSiteCode));
 		} else if (serverSettings.engineAddress) {
 			queryString.push('engineaddress=' + serverSettings.engineAddress);
 		}
