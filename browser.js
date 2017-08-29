@@ -56,7 +56,7 @@ onload = function() {
 };
 
 function getServerSettings(callback) {
-	storage.get('serverSettings', function(results) {
+	chrome.storage.managed.get('serverSettings', function(results) {
 		if (chrome.runtime.lastError) {
 			console.log('error, returning empty. Error Message: ' + chrome.runtime.lastError.message);
 			return;
