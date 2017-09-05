@@ -1,0 +1,41 @@
+{
+    "name": "Imagine Learning Español",
+    "author": "Imagine Learning",
+    "version": "1.80.6643",
+    "manifest_version": 2,
+    "offline_enabled": true,
+    "minimum_chrome_version": "33",
+    "kiosk_enabled": true,
+    "app": {
+        "background": {
+            "scripts": ["underscore.js","encoding.js","common.js","mime.js","buffer.js","request.js","stream.js","connection.js","webapp.js","handlers.js","httplib.js","background.js"]
+        }
+    },
+    "storage": {
+    "managed_schema": "schema.json"
+    },
+    "permissions": [
+        "webview",
+        "alarms",
+        "storage",
+        "power",
+        "system.network",
+        "audioCapture",
+        {"fileSystem":["write","directory","retainEntries"]}
+    ],
+    "sockets": {
+       "udp": {
+         "send": [""],
+         "bind": [""]
+       },
+       "tcp": {
+         "connect": [""]
+       },
+       "tcpServer": {
+         "listen": ["*:*"]
+       }
+    },
+    "icons": { 
+        "128": "images/spanish_il_128.png"
+    }
+}

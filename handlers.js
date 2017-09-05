@@ -76,7 +76,7 @@
         //this.debugInterval = setInterval( this.debug.bind(this), 1000)
         this.entry = null
         this.file = null
-        this.readChunkSize = 4096 * 16
+        this.readChunkSize = 1024 * 1024
         this.fileOffset = 0
         this.fileEndOffset = 0
         this.bodyWritten = 0
@@ -158,6 +158,22 @@
             if (this.fs.isFile) {
                 this.onEntry(this.fs)
             } else {
+                //swap out the release version for the compressed versions
+                if (this.request.path.indexOf("Release") > -1){
+                  //use the compressed folder
+                  var path = this.request.path.replace('Release', 'Compressed');
+                  //add a gz to the extension
+                  path += 'gz';
+                  this.request.path = path;
+                  this.setHeader('Content-Encoding', 'gzip');
+                }
+
+                if (this.request.path.indexOf("dash.mediaplayer.min.js") > -1){
+                  //add a gz to the extension
+                  this.request.path += 'gz';
+                  this.setHeader('Content-Encoding', 'gzip');
+                }
+              
                 this.fs.getByPath(this.request.path, this.onEntry.bind(this))
             }
         },
@@ -306,7 +322,7 @@
         },
         renderFileContents: function(entry, file) {
             getEntryFile(entry, function(file) {
-                if (file instanceof FileError) {
+                if (file instanceof DOMError) {
                     this.write("File not found", 404)
                     this.finish()
                     return
@@ -455,10 +471,13 @@
         
         chrome.runtime.getPackageDirectoryEntry( function(pentry) {
             var template_filename = 'directory-listing-template.html'
-            var onfile = function(e) {
-                if (e instanceof FileError) {
+            var onfile = function (e) {
+            	console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				console.log(e);
+                if (e instanceof DOMError) {
                     console.error('template fetch:',e)
-                } else {
+                } else
+                {
                     var onfile = function(file) {
                         var onread = function(evt) {
                             WSC.template_data = evt.target.result
