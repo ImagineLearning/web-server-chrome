@@ -5,7 +5,7 @@
     "version": "1.80.6643",
     "manifest_version": 2,
     "offline_enabled": false,
-    "minimum_chrome_version": "56",
+    "minimum_chrome_version": "45",
     "kiosk_enabled": true,
     "description": "Imagine Language & Literacy® teaches language and literacy to students around the world through engaging, interactive instruction.",
     "app": {
