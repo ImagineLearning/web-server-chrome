@@ -60,18 +60,6 @@
             ],
             "title": "Open Imagine Learning"
         },
-        "partnerapp.imaginelearning.com" : {
-            "matches": [
-                "*://partnerapp.imaginelearning.com/*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "eapapp.imaginelearning.com" : {
-            "matches": [
-                "*://eapapp.imaginelearning.com/*"
-            ],
-            "title": "Open Imagine Learning"
-        },
         "app.imaginelearning.com": {
             "matches": [
                 "*://app.imaginelearning.com/*"
