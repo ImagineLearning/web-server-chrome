@@ -242,8 +242,7 @@ function launch(launchData) {
 
 		chrome.app.window.create(page, {
 			//We only want to allow a single instance of our app open at a time
-			id: "", 
-			singleton: true,
+			id: "IL App",
 			outerBounds: {
 				width: width,
 				height: height
