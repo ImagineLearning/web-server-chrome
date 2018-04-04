@@ -241,6 +241,8 @@ function launch(launchData) {
 		var height = screenHeight;
 
 		chrome.app.window.create(page, {
+			//We only want to allow a single instance of our app open at a time
+			id: "IL App",
 			outerBounds: {
 				width: width,
 				height: height
