@@ -19,7 +19,6 @@
         "browser",
         "alarms",
         "storage",
-        "power",
         "system.network",
         "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
