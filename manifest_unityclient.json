@@ -22,6 +22,7 @@
         "alarms",
         "storage",
         "system.network",
+        "videoCapture",
         "audioCapture",
         {"fileSystem":["write","directory","retainEntries"]}
     ],
