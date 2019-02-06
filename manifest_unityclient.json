@@ -49,21 +49,9 @@
         "matches": ["*://localhost:*/*", "*://127.0.0.1:*/*", "*://*.imaginelearning.com/*"]
     },
     "url_handlers": {
-        "testapp.imaginelearning.com" : {
-            "matches": [
-                "*://testapp.imaginelearning.com/*"
-            ],
-            "title": "Open Imagine Learning"
-        },
-        "rcapp.imaginelearning.com" : {
-            "matches": [
-                "*://rcapp.imaginelearning.com/*"
-            ],
-            "title": "Open Imagine Learning"
-        },
         "app.imaginelearning.com": {
             "matches": [
-                "*://app.imaginelearning.com/*"
+                "https://app.imaginelearning.com/*"
             ],
             "title": "Open Imagine Learning"
         }
