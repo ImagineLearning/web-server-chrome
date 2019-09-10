@@ -27,6 +27,8 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 		if (serverSettings.env) {
 			queryString.push('env=' + serverSettings.env);
 		}
+
+		queryString.push('chromeApp');
 	}
 
 	//if no environment set then default to production
@@ -38,6 +40,5 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 	}
 
 	url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
-
 	return url;
 }

@@ -206,7 +206,10 @@ function handleLoadRedirect(event) {
 		return;
 	}
 
-	document.querySelector('#location').value = event.newUrl;
+	var location = document.querySelector('#location');
+	if(location !== null){
+		location.value = event.newUrl;
+	}
 }
 
 function handleNewWindow(event) {
