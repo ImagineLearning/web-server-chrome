@@ -51,9 +51,7 @@
     "url_handlers": {
         "app.imaginelearning.com": {
             "matches": [
-                "https://app.imaginelearning.com/*",
-                "https://testapp.imaginelearning.com/*",
-                "https://rcapp.imaginelearning.com/*"
+                "https://app.imaginelearning.com/*"
             ],
             "title": "Open Imagine Learning"
         }
