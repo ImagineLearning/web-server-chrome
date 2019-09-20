@@ -220,6 +220,11 @@ function launch(launchData) {
 		chrome.storage.local.remove('relativeLaunchUrl', launchApp);
 	}
 
+	// If we are relaunching the app, inform the webview so it'll start again.
+	if(window.app && relativeUrl) {
+		chrome.runtime.sendMessage({command: "restart"}, (response) => {});
+	}
+
 	function launchApp() {
 		var info = {
 			type: 'onLaunched',

@@ -28,16 +28,8 @@ function convertServerSettingsToUrl(serverSettings, launchUrl) {
 			queryString.push('env=' + serverSettings.env);
 		}
 	}
-
-	//if no environment set then default to production
-	var envIndex = queryString.findIndex(function(item) {
-		return /^env=/.test(item);
-	});
-	if (envIndex < 0) {
-		queryString.push('env=production');
-	}
+	queryString.push('platform=chromeApp');
 
 	url += (url.indexOf('?') < 0 ? '?' : '&') + queryString.join('&');
-
 	return url;
 }

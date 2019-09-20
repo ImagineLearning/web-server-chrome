@@ -206,7 +206,10 @@ function handleLoadRedirect(event) {
 		return;
 	}
 
-	document.querySelector('#location').value = event.newUrl;
+	var location = document.querySelector('#location');
+	if(location !== null){
+		location.value = event.newUrl;
+	}
 }
 
 function handleNewWindow(event) {
@@ -272,7 +275,10 @@ function handleMessage(message, sender, sendResponse) {
 			});
 		});
 		return !!sendResponse; // wait for response
+	} else if (message.command === 'restart') {
+		onload();
 	}
 }
 
 chrome.runtime.onMessageExternal.addListener(handleMessage);
+chrome.runtime.onMessage.addListener(handleMessage);
