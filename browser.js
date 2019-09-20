@@ -275,7 +275,10 @@ function handleMessage(message, sender, sendResponse) {
 			});
 		});
 		return !!sendResponse; // wait for response
+	} else if (message.command === 'restart') {
+		onload();
 	}
 }
 
 chrome.runtime.onMessageExternal.addListener(handleMessage);
+chrome.runtime.onMessage.addListener(handleMessage);
